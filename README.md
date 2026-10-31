@@ -43,9 +43,11 @@ Package repository: https://github.com/alebayon/ap_core
 
 ## Design rationale
 
-Maintainer decision log (grains, columns, shared policy, naming): docs/core_decisions.md in this repo.
+This README is the public architecture summary (scope, layers, SAP vs Coupa, timing boundary, arbitration, how products consume the package).
 
-Public architecture summary (when added): docs/architecture_core_decisions.md — placeholder for a shorter reader-facing doc. Until then, README plus core_decisions.md are the contract.
+Maintainer decision log (grains, columns, shared policy, naming, model inventory): [docs/core_decisions.md](docs/core_decisions.md) in this repo.
+
+Product-specific KPI and funnel choices live in each product repo (for example [cash_discount](https://github.com/alebayon/cash_discount) README and architecture docs).
 
 ## Term definitions
 
