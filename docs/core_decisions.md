@@ -343,11 +343,41 @@ Policy version selected by effective date; v1 evaluation date = `document_date`.
 **Release**
 
 - **v0.1.1:** vendor master only (this entry) — no invoice curriculum changes; CD KPI counts unchanged.
-- **v0.1.2:** OTP net-late invoice curriculum (`510000003x`) — separate change set.
+- **v0.1.2:** OTP net-late invoice curriculum (`510000003x`) — separate change set (see **2026-11-16 OTP heroes** below).
 
 **Impact:** `src_vendor_*`, `raw_vendor_*` seeds, dim models, `assert_dim_vendor_*` row counts, optional `assert_dim_vendor_critical_curriculum`. Products join invoice `vendor_id` to `dim_vendor_sap` for critical escalation.
 
 **Follow-up (v0.1.1.2):** Coupa `quote_columns` — quote `"is_critical"` in `src_vendor_coupa`. **v0.1.1.3:** `src_inv_sap` and `src_vendor_sap` use `lpad(..., 10, '0')` on `vendor_id`; `raw_inv_sap` / `raw_vendor_sap` force `LIFNR` varchar so invoice spine FK tests to `dim_vendor_sap` pass (OTP `fct_inv_sap_otp` relationships).
+
+---
+
+### 2026-11-16 — OTP v0.1.2 net-late invoice heroes [CURRICULUM]
+
+**Context:** On-time payment v1 needs KPI-late rows without mutating CD leakage clearing dates on BELNR `5100000001`–`5100000026`.
+
+**Decision**
+
+- Add **seven** additive KR rows **`5100000030`–`5100000036`** (+ Coupa `10030`–`10036` except SAP-only `5100000032` Finanzamt, `5100000035` Arbitration).
+- **`clearing_date > net_due_date`** in reporting period **2024**; **`otp_grace_days = 0`**.
+- **CD regression:** use **`Z205`** or **`Z008`** (no positive discount) so `is_cd_eligible = false`; **do not** change CD funnel counts (still 16 KPI ENT, 12 leakage, €190.20).
+- Add **`Z008`** (`net_days = 7`) to `seed_payment_term_sap` for Rule 2 structural hero.
+- **`5100000031`:** SAP payment-block change pair (ZLSPR) on late FastPay row (parallel to `5100000025` instrumentation).
+
+**Hero matrix**
+
+| BELNR | Vendor | Map | Terms | Net-late intent | OTP `primary_cause` |
+|-------|--------|-----|-------|-----------------|---------------------|
+| `5100000030` | FastPay `0000100004` | `10030` | Z205 | Critical + volume; payment runway | `payment_execution` |
+| `5100000031` | FastPay | `10031` | Z205 | Payment block overlay | `payment_execution` |
+| `5100000032` | Finanzamt `0000100009` | SAP-only | Z205 | Small €; critical-only | `payment_execution` |
+| `5100000033` | Global `0000100002` | `10033` | Z205 | High-value concentration | `pre_sap_execution_compressed` |
+| `5100000034` | Nordic `0000100003` | `10034` | Z205 | Tight handoff | `pre_sap_execution_standard` |
+| `5100000035` | Arbitration `0000100008` | SAP-only | Z205 | High-severity vendor | `payment_execution` |
+| `5100000036` | Acme `0000100001` | `10036` | Z008 | Short net structural | `structural_terms_vs_capability` |
+
+**Row counts (post v0.1.2 seeds):** `fct_inv_sap_core` **32** KR; map **26**; Coupa invoices **28** (23 paid matched); `fct_inv_sap_changes` **4**; Coupa changes **114**; ownership spans **64** (**55** measured); subprocess spans **164**.
+
+**Release:** package tag **`v0.1.2`**; pin products after green `dbt build`.
 
 ---
 
@@ -360,22 +390,22 @@ Update row counts after `dbt build`.
 | `src_*` | src | per source | existing | Tagged `core` in dbt_project.yml |
 | `dim_vendor_sap` | dim | vendor | existing | 9 rows (8 active); `is_active`, `is_critical`, `critical_reason`; inactive `0000100005` |
 | `dim_vendor_coupa` | dim | supplier | existing | 8 rows (7 active); `status`, `is_active`, `is_critical`, `critical_reason`; inactive `9000005` |
-| `map_inv_sap_coupa` | map | (sap_inv_key, coupa_id) | existing | 21 rows; SAP side from `src_inv_sap` + `fct_inv_coupa` |
+| `map_inv_sap_coupa` | map | (sap_inv_key, coupa_id) | existing | 26 rows; SAP side from `src_inv_sap` + `fct_inv_coupa` |
 | `fct_inv_coupa` | fct | coupa invoice | existing | |
 | `fct_inv_coupa_changes` | fct | change event | existing | |
 | `fct_inv_sap_changes` | fct | change event | existing | |
-| `seed_payment_term_sap` | seed | ZTERM | existing | Z210, Z205, Z525, N030; includes `net_days` |
+| `seed_payment_term_sap` | seed | ZTERM | existing | Z008, Z210, Z205, Z525, N030; includes `net_days` |
 | `seed_cd_wco_arbitration_policy` | seed | policy version | existing | v1; effective on `document_date`; tag `core` |
-| `fct_inv_sap_core` | fct | sap_inv_key | existing | 25 KR rows; tag `core`; public contract v0 |
-| `fct_inv_timing_span` | fct | span grain | existing | Core; refs `fct_inv_sap_core`; 25 inv.; ownership 50 (43 measured); subprocess 129 |
+| `fct_inv_sap_core` | fct | sap_inv_key | existing | 32 KR rows; tag `core`; public contract v0 |
+| `fct_inv_timing_span` | fct | span grain | existing | Core; refs `fct_inv_sap_core`; 32 inv.; ownership 64 (55 measured); subprocess 164 |
 | `int_inv_coupa_overlay_intervals` | int | interval | existing | Core |
 | `int_inv_sap_payment_block_intervals` | int | interval | existing | Core |
 | `fct_inv_timing_overlay_core` | fct | overlay interval | existing | 7 rows; observed Coupa + SAP blocks; tag `core` |
 | `fct_inv_timing_overlay_cd` | fct (CD) | overlay interval | existing | 10 rows; canonical CD overlay; `_core` ∪ `payment_run_wait`; tag `cash_discount` |
 | `fct_inv_timing_overlay_span` | fct | overlap | existing | CD; refs `fct_inv_timing_overlay_cd` + `fct_inv_timing_span` |
 | `fct_inv_timing_overlay_span_observed` | fct | overlap | planned | Optional: span on `_core` only |
-| `fct_inv_cd_wco_arbitration` | fct | sap_inv_key | existing | 25 rows; tag `core`; gates + `payment_strategy`; WCO/CD consume |
-| `fct_inv_sap_cd` | fct (CD) | sap_inv_key | existing | 25 rows; extends core + arbitration; ENT includes `is_cd_eligible`; V6 leakage |
+| `fct_inv_cd_wco_arbitration` | fct | sap_inv_key | existing | 32 rows; tag `core`; gates + `payment_strategy`; WCO/CD consume |
+| `fct_inv_sap_cd` | fct (CD) | sap_inv_key | existing | 32 rows; extends core + arbitration; ENT includes `is_cd_eligible`; V6 leakage |
 
 ---
 
@@ -396,4 +426,4 @@ Update row counts after `dbt build`.
 
 Last updated: 2026-11-16
 
-Package **v0.1.1.3** on GitHub (vendor master + LIFNR spine); **v0.1.2** next (OTP net-late heroes). **cash_discount** pinned.
+Package **v0.1.2** (OTP net-late heroes **`5100000030`–`5100000036`**); products pin after tag push. Prior **v0.1.1.3** = vendor master + LIFNR spine.

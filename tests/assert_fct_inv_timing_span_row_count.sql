@@ -1,4 +1,4 @@
--- ownership only: 25 invoices x 2 phases; 5100000026 adds one measured payment span (SAP-only)
+-- ownership only: 32 invoices x 2 phases (v0.1.2 OTP heroes); SAP-only rows are payment-measured only
 select
     total_rows,
     measured_rows
@@ -9,5 +9,5 @@ from (
     from {{ ref('fct_inv_timing_span') }}
     where phase_level = 'ownership'
 )
-where total_rows != 50
-   or measured_rows != 43
+where total_rows != 64
+   or measured_rows != 55
