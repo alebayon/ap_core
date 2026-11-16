@@ -18,7 +18,7 @@ with raw as (
 renamed as (
 
     select
-        trim(lifnr) as vendor_id,
+        lpad(trim(cast(lifnr as varchar)), 10, '0') as vendor_id,
         trim(name1) as vendor_name,
         trim(land1) as country_code,
         trim(ort01) as city,
@@ -26,8 +26,11 @@ renamed as (
         trim(ktokk) as account_group,
         nullif(trim(loevm), '') as deletion_flag,
         cast(erdat as date) as created_date,
-        lower(trim(is_critical)) = 'true' as is_critical,
-        nullif(trim(critical_reason), '') as critical_reason
+        coalesce(
+            try_to_boolean(cast(is_critical as varchar)),
+            lower(trim(cast(is_critical as varchar))) = 'true'
+        ) as is_critical,
+        nullif(trim(cast(critical_reason as varchar)), '') as critical_reason
     from raw
 
 )
