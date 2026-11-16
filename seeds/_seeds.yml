@@ -42,6 +42,11 @@ seeds:
       column_types:
         LIFNR: varchar
 
+  - name: raw_inv_sap
+    config:
+      column_types:
+        LIFNR: varchar
+
   - name: raw_inv_coupa
     config:
       quote_columns: true

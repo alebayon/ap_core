@@ -28,7 +28,7 @@ renamed as (
         trim(belnr) as doc_number,
         trim(bukrs) as company_code,
         trim(gjahr) as fiscal_year,
-        trim(lifnr) as vendor_id,
+        lpad(trim(cast(lifnr as varchar)), 10, '0') as vendor_id,
         trim(blart) as document_type,
         cast(nullif(trim(zfbdt), '') as date) as baseline_date,
         trim(zterm) as payment_terms,

@@ -347,6 +347,8 @@ Policy version selected by effective date; v1 evaluation date = `document_date`.
 
 **Impact:** `src_vendor_*`, `raw_vendor_*` seeds, dim models, `assert_dim_vendor_*` row counts, optional `assert_dim_vendor_critical_curriculum`. Products join invoice `vendor_id` to `dim_vendor_sap` for critical escalation.
 
+**Follow-up (v0.1.1.2):** Coupa `quote_columns` — quote `"is_critical"` in `src_vendor_coupa`. **v0.1.1.3:** `src_inv_sap` and `src_vendor_sap` use `lpad(..., 10, '0')` on `vendor_id`; `raw_inv_sap` / `raw_vendor_sap` force `LIFNR` varchar so invoice spine FK tests to `dim_vendor_sap` pass (OTP `fct_inv_sap_otp` relationships).
+
 ---
 
 ## Model inventory
@@ -394,4 +396,4 @@ Update row counts after `dbt build`.
 
 Last updated: 2026-11-16
 
-Package **v0.1.0** on GitHub; **v0.1.1** pending (vendor `is_critical` / Finanzamt). **cash_discount** pinned. Spine **25** KR unchanged until **v0.1.2** OTP curriculum. **Next:** tag v0.1.1 after Step 1 build; v0.1.2 net-late heroes.
+Package **v0.1.1.3** on GitHub (vendor master + LIFNR spine); **v0.1.2** next (OTP net-late heroes). **cash_discount** pinned.
