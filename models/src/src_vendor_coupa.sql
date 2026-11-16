@@ -8,8 +8,8 @@ with raw as (
         "postal-code",
         "status",
         "created-at",
-        is_critical,
-        critical_reason
+        "is_critical",
+        "critical_reason"
     from {{ ref('raw_vendor_coupa') }}
 
 ),
