@@ -24,8 +24,8 @@ renamed as (
         trim("postal-code") as postal_code,
         trim("status") as status,
         cast("created-at" as timestamp_ntz) as created_at,
-        lower(trim(is_critical)) = 'true' as is_critical,
-        nullif(trim(critical_reason), '') as critical_reason
+        lower(trim("is_critical")) = 'true' as is_critical,
+        nullif(trim("critical_reason"), '') as critical_reason
     from raw
 
 )
