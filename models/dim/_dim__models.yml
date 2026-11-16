@@ -18,6 +18,18 @@ models:
           - accepted_values:
               arguments:
                 values: [true, false]
+      - name: is_critical
+        description: >
+          Governed flag from raw vendor master; not derived from spend or lateness.
+          Used for critical-vendor escalation in OTP (and optionally CD later).
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [true, false]
+      - name: critical_reason
+        description: >
+          Short narrative why the vendor is critical; null when is_critical is false.
 
   - name: dim_vendor_coupa
     description: >
@@ -40,3 +52,14 @@ models:
           - accepted_values:
               arguments:
                 values: [true, false]
+      - name: is_critical
+        description: >
+          Governed flag from Coupa supplier master; aligned with SAP critical policy.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [true, false]
+      - name: critical_reason
+        description: >
+          Short narrative why the supplier is critical; null when is_critical is false.

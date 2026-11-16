@@ -8,7 +8,9 @@ with src as (
         postal_code,
         account_group,
         deletion_flag,
-        created_date
+        created_date,
+        is_critical,
+        critical_reason
     from {{ ref('src_vendor_sap') }}
 
 ),
@@ -23,7 +25,9 @@ deduped as (
         postal_code,
         account_group,
         deletion_flag,
-        created_date
+        created_date,
+        is_critical,
+        critical_reason
     from src
     qualify row_number() over (
         partition by vendor_id
@@ -43,7 +47,12 @@ final as (
         account_group,
         deletion_flag,
         created_date,
-        deletion_flag is null as is_active
+        deletion_flag is null as is_active,
+        coalesce(is_critical, false) as is_critical,
+        case
+            when coalesce(is_critical, false)
+            then critical_reason
+        end as critical_reason
     from deduped
 
 )
@@ -57,5 +66,7 @@ select
     account_group,
     deletion_flag,
     created_date,
-    is_active
+    is_active,
+    is_critical,
+    critical_reason
 from final

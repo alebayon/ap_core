@@ -7,7 +7,9 @@ with raw as (
         "city",
         "postal-code",
         "status",
-        "created-at"
+        "created-at",
+        is_critical,
+        critical_reason
     from {{ ref('raw_vendor_coupa') }}
 
 ),
@@ -21,7 +23,9 @@ renamed as (
         trim("city") as city,
         trim("postal-code") as postal_code,
         trim("status") as status,
-        cast("created-at" as timestamp_ntz) as created_at
+        cast("created-at" as timestamp_ntz) as created_at,
+        lower(trim(is_critical)) = 'true' as is_critical,
+        nullif(trim(critical_reason), '') as critical_reason
     from raw
 
 )
@@ -33,5 +37,7 @@ select
     city,
     postal_code,
     status,
-    created_at
+    created_at,
+    is_critical,
+    critical_reason
 from renamed

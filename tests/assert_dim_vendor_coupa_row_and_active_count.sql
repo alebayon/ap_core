@@ -1,11 +1,11 @@
--- 7 suppliers total; 6 active (9000005 inactive retained on dim)
+-- 8 suppliers total; 7 active (9000005 inactive retained; 9000009 Finanzamt)
 select count(*) as supplier_count
 from {{ ref('dim_vendor_coupa') }}
-having count(*) != 7
+having count(*) != 8
 
 union all
 
 select count(*) as active_count
 from {{ ref('dim_vendor_coupa') }}
 where is_active
-having count(*) != 6
+having count(*) != 7

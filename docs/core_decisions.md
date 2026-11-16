@@ -3,7 +3,7 @@
 Record durable choices for the **shared AP knowledge model** (`ap_core`).
 Extracted as dbt package **v0.1.0** ([`alebayon/ap_core`](https://github.com/alebayon/ap_core)); consumed by cash_discount, on_time_payment, working_capital, and later products.
 
-**Related:** Cash-discount–only policy and curriculum → `docs/decisions.md` (legacy log until CD is refactored onto product extensions).
+**Related product logs:** Cash discount → `cash_discount/docs/decisions_cd.md`. On-time payment → `on_time_payment/docs/decisions_otp.md`.
 
 ---
 
@@ -319,6 +319,36 @@ Policy version selected by effective date; v1 evaluation date = `document_date`.
 
 ---
 
+### 2026-11-16 — Vendor master: `is_critical` and `critical_reason` [CONTRACT]
+
+**Context:** OTP action-report Queue B needs governed critical-vendor flags; cash discount may reuse the same master later. Curriculum adds Finanzamt for tax-authority escalation narrative without inferring criticality from spend or lateness.
+
+**Decision**
+
+- **`dim_vendor_sap`** and **`dim_vendor_coupa`** expose:
+  - **`is_critical`** — boolean from raw seeds (`true` / `false`); **governed, not derived** from invoices or KPIs.
+  - **`critical_reason`** — short narrative text when `is_critical = true`; **null** when not critical.
+- **Inactive suppliers retained** on dims (unchanged **2026-10-24**).
+- **Curriculum critical vendors (SAP `vendor_id`):**
+
+| `vendor_id` | `is_critical` | `critical_reason` (illustrative) |
+|-------------|---------------|----------------------------------|
+| `0000100004` | true | Strategic payment-rail and high-throughput AP supplier |
+| `0000100009` | true | Tax authority; mandatory payment relationship |
+| All others | false | null |
+
+- **New master:** Finanzamt — SAP `0000100009`, Coupa `9000009`, active on both sides.
+- **Row counts (post Step 1):** SAP dim **9** (8 active); Coupa dim **8** (7 active).
+
+**Release**
+
+- **v0.1.1:** vendor master only (this entry) — no invoice curriculum changes; CD KPI counts unchanged.
+- **v0.1.2:** OTP net-late invoice curriculum (`510000003x`) — separate change set.
+
+**Impact:** `src_vendor_*`, `raw_vendor_*` seeds, dim models, `assert_dim_vendor_*` row counts, optional `assert_dim_vendor_critical_curriculum`. Products join invoice `vendor_id` to `dim_vendor_sap` for critical escalation.
+
+---
+
 ## Model inventory
 
 Update row counts after `dbt build`.
@@ -326,8 +356,8 @@ Update row counts after `dbt build`.
 | Object | Layer | Grain | Status | Notes |
 |--------|-------|-------|--------|-------|
 | `src_*` | src | per source | existing | Tagged `core` in dbt_project.yml |
-| `dim_vendor_sap` | dim | vendor | existing | 8 rows (7 active); `is_active`; inactive `0000100005` |
-| `dim_vendor_coupa` | dim | supplier | existing | 7 rows (6 active); `status`, `is_active`; inactive `9000005` |
+| `dim_vendor_sap` | dim | vendor | existing | 9 rows (8 active); `is_active`, `is_critical`, `critical_reason`; inactive `0000100005` |
+| `dim_vendor_coupa` | dim | supplier | existing | 8 rows (7 active); `status`, `is_active`, `is_critical`, `critical_reason`; inactive `9000005` |
 | `map_inv_sap_coupa` | map | (sap_inv_key, coupa_id) | existing | 21 rows; SAP side from `src_inv_sap` + `fct_inv_coupa` |
 | `fct_inv_coupa` | fct | coupa invoice | existing | |
 | `fct_inv_coupa_changes` | fct | change event | existing | |
@@ -362,6 +392,6 @@ Update row counts after `dbt build`.
 
 ## Chat handoff notes
 
-Last updated: 2026-10-26
+Last updated: 2026-11-16
 
-Package **v0.1.0** on GitHub; **cash_discount** pinned (duplicate core removed). Spine unchanged: `fct_inv_sap_core` → `fct_inv_cd_wco_arbitration` → `fct_inv_sap_cd` (**25** KR). Curriculum heroes **0015** / **0016** / **0026**; dims 8 / 7 with `is_active`. **Next:** CI + semver (step 5); optional prune duplicate core singular tests in cash_discount.
+Package **v0.1.0** on GitHub; **v0.1.1** pending (vendor `is_critical` / Finanzamt). **cash_discount** pinned. Spine **25** KR unchanged until **v0.1.2** OTP curriculum. **Next:** tag v0.1.1 after Step 1 build; v0.1.2 net-late heroes.

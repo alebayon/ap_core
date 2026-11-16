@@ -7,7 +7,9 @@ with src as (
         city,
         postal_code,
         status,
-        created_at
+        created_at,
+        is_critical,
+        critical_reason
     from {{ ref('src_vendor_coupa') }}
 
 ),
@@ -21,7 +23,9 @@ deduped as (
         city,
         postal_code,
         status,
-        created_at
+        created_at,
+        is_critical,
+        critical_reason
     from src
     qualify row_number() over (
         partition by vendor_id
@@ -40,7 +44,12 @@ final as (
         postal_code,
         status,
         created_at,
-        status = 'active' as is_active
+        status = 'active' as is_active,
+        coalesce(is_critical, false) as is_critical,
+        case
+            when coalesce(is_critical, false)
+            then critical_reason
+        end as critical_reason
     from deduped
 
 )
@@ -53,5 +62,7 @@ select
     postal_code,
     status,
     created_at,
-    is_active
+    is_active,
+    is_critical,
+    critical_reason
 from final

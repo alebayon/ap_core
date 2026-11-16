@@ -8,7 +8,9 @@ with raw as (
         pstlz,
         ktokk,
         loevm,
-        erdat
+        erdat,
+        is_critical,
+        critical_reason
     from {{ ref('raw_vendor_sap') }}
 
 ),
@@ -23,7 +25,9 @@ renamed as (
         trim(pstlz) as postal_code,
         trim(ktokk) as account_group,
         nullif(trim(loevm), '') as deletion_flag,
-        cast(erdat as date) as created_date
+        cast(erdat as date) as created_date,
+        lower(trim(is_critical)) = 'true' as is_critical,
+        nullif(trim(critical_reason), '') as critical_reason
     from raw
 
 )
