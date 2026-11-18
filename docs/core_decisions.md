@@ -375,9 +375,44 @@ Policy version selected by effective date; v1 evaluation date = `document_date`.
 | `5100000035` | Arbitration `0000100008` | SAP-only | Z205 | High-severity vendor | `payment_execution` |
 | `5100000036` | Acme `0000100001` | `10036` | Z008 | Short net structural | `structural_terms_vs_capability` |
 
-**Row counts (post v0.1.2 seeds):** `fct_inv_sap_core` **32** KR; map **26**; Coupa invoices **28** (23 paid matched); `fct_inv_sap_changes` **4**; Coupa changes **114**; ownership spans **64** (**55** measured); subprocess spans **164**.
+**Row counts (post v0.1.2 seeds):** `fct_inv_sap_core` **32** KR; map **26**; Coupa invoices **28** (23 paid matched); `fct_inv_sap_changes` **6** (after 2026-11-18 `5100000030` block); Coupa changes **120**; ownership spans **64** (**55** measured); subprocess spans **167**; `fct_inv_timing_overlay_core` **12** episodes.
 
 **Release:** package tag **`v0.1.2`**; pin products after green `dbt build`.
+
+---
+
+### 2026-11-17 — Overlay reason vendor follow-up flag [CONTRACT]
+
+**Context:** OTP PDF Vendor Attention vs governed vendor-engaged blockers only.
+
+**Decision**
+
+- **`seed_timing_overlay_reason_map.is_vendor_follow_up_eligible`:** `inv_dispute` **true**; `on_hold`, `rework`, `payment_block`, `payment_run_wait` **false** until exceptions.
+- OTP consumes via package seed; does not change overlay clip intervals.
+
+**Release:** ship with next ap_core patch (**v0.1.2.1** or **v0.1.3**); products need `dbt seed --full-refresh` on that seed.
+
+---
+
+### 2026-11-18 — OTP PDF blocker curriculum (source events only) [CURRICULUM]
+
+**Context:** OTP PDF demo needs multiple Queue A blockers and one vendor-eligible `inv_dispute` without new BELNR heroes or SAP date changes.
+
+**Decision (synthetic events only — not empirical business evidence)**
+
+| Hero | Change |
+|------|--------|
+| **`5100000030`** | ZLSPR **2024-05-20 → 2024-05-24** (payment window after SAP entry 2024-05-08). |
+| **`5100000031`** | Unchanged ZLSPR **2024-06-20 → 2024-06-27**. |
+| **`10033` / `5100000033`** | Coupa: submit → reject → resubmit → **disputed** → approve (clipped **rework** + **inv_dispute** in pre_sap window). |
+| **`10034` / `5100000034`** | Coupa **`on_hold`** 2024-10-06 between submit and pending_approval. |
+| **`5100000032`, `5100000035`, `5100000036`** | Unchanged (unlogged payment + structural). |
+
+**Do not** change CD heroes **`5100000001`–`5100000026`**.
+
+**Seed row counts:** `fct_inv_sap_changes` **6**; `fct_inv_coupa_changes` **120** (re-run `dbt build` for span counts).
+
+**Release:** **`v0.1.2.2`** (or next patch); OTP pins after green build.
 
 ---
 
